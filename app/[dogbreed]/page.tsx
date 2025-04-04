@@ -5,6 +5,18 @@ type Props = {
   params: Promise<{ dogbreed?: string }>;
 };
 
+type BreedData = {
+  breed: {
+    name: string;
+    breed_group: string;
+    temperament: string;
+    life_span: string;
+    height: { imperial: string };
+    weight: { imperial: string };
+  };
+  image: string | null;
+};
+
 export default async function DogBreedPage({ params }: Props) {
   const { dogbreed } = await params;
 
@@ -13,14 +25,29 @@ export default async function DogBreedPage({ params }: Props) {
   const breedId = parseInt(dogbreed, 10);
   if (isNaN(breedId)) return <div>Invalid breed ID.</div>;
 
-  let data;
+  let data: BreedData | null = null;
+  let errorMessage = "";
+
   try {
     data = await getDogData(breedId);
-  } catch (error: any) {
-    return <div className="text-center text-red-600">{error.message}</div>;
+    if (!data) {
+      errorMessage = "Breed not found.";
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      errorMessage = `Error fetching dog data: ${error.message}`;
+    } else {
+      errorMessage = "An unknown error occurred.";
+    }
   }
 
-  if (!data) return <div>Breed not found.</div>;
+  if (errorMessage) {
+    return <div>{errorMessage}</div>;
+  }
+
+  if (!data) {
+    return <div>Breed data is unavailable.</div>;
+  }
 
   const imageContent =
     data.image && data.image.length > 0 ? (
